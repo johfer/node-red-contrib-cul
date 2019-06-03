@@ -1,7 +1,7 @@
 {
 	"name": "@johfer/node-red-contrib-cul",
-	"version": "0.0.2",
-	"description": "CUL for node-red, forked from 1stsetup/node-red-contrib-cul",
+	"version": "0.0.3",
+	"description": "CUL for node-red, forked from https://github.com/1stsetup/node-red-contrib-cul",
 	"main": "cul.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
@@ -22,13 +22,10 @@
 		}
 	},
 	"author": "Johannes Ferber <johannes.ferber@gmail.com>",
-	"license": "CC-BY-NC-SA-4.0",
 	"bugs": {
 		"url": "https://github.com/1stsetup/node-red-contrib-cul/issues"
 	},
 	"homepage": "https://github.com/1stsetup/node-red-contrib-cul#readme",
-	"author": "",
-	"license": "ISC",
 	"dependencies": {
 		"cul": ">=0.6.0"
 	}

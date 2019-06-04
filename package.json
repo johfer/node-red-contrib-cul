@@ -1,7 +1,7 @@
 {
 	"name": "@johfer/node-red-contrib-cul",
 	"version": "0.0.3",
-	"description": "CUL for node-red, forked from https://github.com/1stsetup/node-red-contrib-cul",
+	"description": "CUL for node-red, forked 1stsetup/node-red-contrib-cul",
 	"main": "cul.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
@@ -16,9 +16,7 @@
   ],
 	"node-red": {
 		"nodes": {
-			"cul-in": "cul.js",
-			"cul-out": "cul.js",
-			"cul-controller": "cul.js"
+			"cul": "cul.js"
 		}
 	},
 	"author": "Johannes Ferber <johannes.ferber@gmail.com>",

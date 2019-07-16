@@ -71,7 +71,7 @@ module.exports = function (RED) {
 			controller.culConn = null;
 
 			Object.values(controller.nodeList).forEach(node => node.emit("connecting"));
-			
+
 			controller.log("serialport:" + controller.serialport);
 			controller.log("baudrate:" + controller.baudrate);
 			controller.log("mode:" + controller.mode);
@@ -133,40 +133,42 @@ module.exports = function (RED) {
 	function CULOut(config) {
 		RED.nodes.createNode(this, config);
 		this.name = config.name;
-		this.ctrl = RED.nodes.getNode(config.controller);
+		this.controller = RED.nodes.getNode(config.controller);
 		var node = this;
 		//node.log('new CUL-OUT, config: ' + util.inspect(config));
 		this.on("input", function (msg) {
 			node.log('culout.onInput, msg[' + util.inspect(msg) + ']');
-			if (!(msg && msg.hasOwnProperty('payload'))) return;
-			var payload;
-			if (typeof (msg.payload) === "object") {
-				payload = msg.payload;
-			} else if (typeof (msg.payload) === "string") {
-				payload = JSON.parse(msg.payload);
-			}
-			if (payload == null) {
-				node.log('culout.onInput: illegal msg.payload!');
+			if (!msg || !msg.hasOwnProperty('payload') || msg.payload === null) {
+				node.warn('CUL Output node: msg.payload must be string or object!');
 				return;
 			}
-			/*            this.groupAddrSend(payload.dstgad, payload.value, payload.dpt, action, function (err) {
-			                if (err) {
-			                    node.error('groupAddrSend error: ' + util.inspect(err));
-			                }
-			            });
-			*/
+
+			var payload;
+			if (typeof (msg.payload) === "object") {
+				payload = JSON.stringify(msg.payload);
+			} else if (typeof (msg.payload) === "string") {
+				payload = msg.payload;
+			}
+			this.controller.culConn.write(payload);
 		});
 		this.on("close", function () {
-			node.log('culout.close');
+			node.controller && node.controller.removeNode && node.controller.removeNode(node);
 		});
 
-		node.status({
-			fill: "yellow",
-			shape: "dot",
-			text: "inactive"
-		});
+		if (node.controller && node.controller.addNode) {
+			node.log("Going to add:" + config.name);
+			node.controller.addNode(node);
+		}
 
-		function nodeStatusConnected() {
+		this.nodeStatusConnecting = function () {
+			node.status({
+				fill: "green",
+				shape: "ring",
+				text: "connecting"
+			});
+		}
+
+		this.nodeStatusConnected = function () {
 			node.status({
 				fill: "green",
 				shape: "dot",
@@ -174,7 +176,7 @@ module.exports = function (RED) {
 			});
 		}
 
-		function nodeStatusDisconnected() {
+		this.nodeStatusDisconnected = function () {
 			node.status({
 				fill: "red",
 				shape: "dot",
@@ -182,72 +184,10 @@ module.exports = function (RED) {
 			});
 		}
 
-		function nodeStatusConnecting() {
-			node.status({
-				fill: "green",
-				shape: "ring",
-				text: "connecting"
-			});
-		}
-		/*
-		        this.groupAddrSend = function (dstgad, value, dpt, action, callback) {
-		            dpt = dpt.toString();
-		            if (action !== 'write')
-		                throw 'Unsupported action[' + action + '] inside of groupAddrSend';
-		            node.log('groupAddrSend action[' + action + '] dstgad:' + dstgad + ', value:' + value + ', dpt:' + dpt);
-		            switch (dpt) {
-		                case '1': //Switch
-		                    value = (value.toString() === 'true' || value.toString() === '1')
-		                    break;
-		                case '9': //Floating point
-		                    value = parseFloat(value);
-		                    break;
-		                case '5':    //8-bit unsigned value               1 Byte                  EIS 6         DPT 5    0...255
-		                case '5.001':    //8-bit unsigned value               1 Byte                  DPT 5.001    DPT 5.001    0...100
-		                case '6':    //8-bit signed value                 1 Byte                  EIS 14        DPT 6    -128...127
-		                case '7':    //16-bit unsigned value              2 Byte                  EIS 10        DPT 7    0...65535
-		                case '8':    //16-bit signed value                2 Byte                  DPT 8         DPT 8    -32768...32767
-		                case '12':   //32-bit unsigned value              4 Byte                  EIS 11        DPT 12    0...4294967295
-		                case '13':   //32-bit signed value                4 Byte                  DPT 13        DPT 13    -2147483648...2147483647
-		                case '17':   //Scene                              1 Byte                  DPT 17        DPT 17    0...63
-		                case '20':   //HVAC                               1 Byte                  DPT 20        DPT 20    0..255
-		                    value = parseInt(value);
-		                    break;
-		                default:
-		                    throw 'Unsupported dpt[' + dpt + '] inside groupAddrSend of knx node'
+		this.on("connecting", this.nodeStatusConnecting);
+		this.on("connected", this.nodeStatusConnected);
+		this.on("disconnected", this.nodeStatusDisconnected);
 
-		            }
-
-		            if (!this.ctrl)
-		                node.error('Cannot proceed groupAddrSend, cause no controller-node specified!');
-		            else
-		            // init a new one-off connection from the effectively singleton KnxController
-		            // there seems to be no way to reuse the outgoing conn in adreek/node-culjs
-		                this.ctrl.initializeKnxConnection(function (connection) {
-
-		                    if (connection.connected)
-		                        nodeStatusConnected();
-		                    else
-		                        nodeStatusDisconnected();
-		                    connection.removeListener('connecting', nodeStatusConnecting);
-		                    connection.on('connecting', nodeStatusConnecting);
-		                    connection.removeListener('connected', nodeStatusConnected);
-		                    connection.on('connected', nodeStatusConnected);
-		                    connection.removeListener('disconnected', nodeStatusDisconnected);
-		                    connection.on('disconnected', nodeStatusDisconnected);
-
-		                    try {
-		                        node.log("sendAPDU: " + util.inspect(value));
-		                        connection.Action(dstgad.toString(), value, null);
-		                        callback && callback();
-		                    }
-		                    catch (err) {
-		                        node.error('error calling groupAddrSend: ' + err);
-		                        callback(err);
-		                    }
-		                });
-		        }
-		*/
 	}
 
 	//

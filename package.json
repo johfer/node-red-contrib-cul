@@ -1,19 +1,20 @@
 {
 	"name": "@johfer/node-red-contrib-cul",
-	"version": "0.0.3",
-	"description": "CUL for node-red, forked 1stsetup/node-red-contrib-cul",
+	"version": "0.1.0",
+	"description": "CUL for node-red, forked from 1stsetup/node-red-contrib-cul",
 	"main": "cul.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "mocha spec.js --exit",
+		"test-inspect": "mocha --inspect-brk spec.js --timeout 10000 --exit"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/johfer/node-red-contrib-cul.git"
 	},
 	"keywords": [
-    "node-red",
-    "cul"
-  ],
+		"node-red",
+		"cul"
+	],
 	"node-red": {
 		"nodes": {
 			"cul": "cul.js"
@@ -26,5 +27,13 @@
 	"homepage": "https://github.com/1stsetup/node-red-contrib-cul#readme",
 	"dependencies": {
 		"cul": ">=0.6.0"
+	},
+	"devDependencies": {
+		"chai": "^4.2.0",
+		"chai-spies": "^1.0.0",
+		"mocha": "^6.1.4",
+		"mock-require": "^3.0.3",
+		"node-red": "^0.20.5",
+		"node-red-node-test-helper": "^0.2.2"
 	}
 }
